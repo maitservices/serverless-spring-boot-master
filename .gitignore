@@ -1,0 +1,7 @@
+.gradle/
+.idea/
+.serverless/
+.serverless-offline/
+build/
+node_modules/
+package-lock.json

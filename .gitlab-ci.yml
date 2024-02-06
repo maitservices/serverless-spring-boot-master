@@ -1,0 +1,71 @@
+ image: java11mavengradleaws/java11mavengradleaws
+
+ stages:
+  - build
+  - unitTes
+  - integrationTest
+  - featureTest
+  - dev
+  - staging
+  - prod
+
+ before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+
+ cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+
+ .dev-common: &dev-common
+  image: codeship/aws-deployment
+  stage: dev
+  when: manual
+  before_script:
+    - source scripts/env_vars.sh
+    - chmod +x scripts/run.sh
+  artifacts:
+    paths:
+      - build/distributions/*
+
+ .prod-common: &prod-common
+  stage: prod
+  only:
+     - master 
+  when: manual
+  before_script:
+    - source scripts/env_vars.sh
+  artifacts:
+    paths:
+      - build/distributions/*
+
+ build:
+  stage: build
+  script:
+    - gradle build -x test
+  artifacts:
+    expire_in: 24h
+    paths:
+      - build/distributions/*
+
+ deploy-dev:
+  <<: *dev-common
+  script:
+    - sh scripts/run.sh deploy dev
+
+ destroy-dev:
+  <<: *dev-common
+  script:
+    - sh scripts/run.sh destroy dev
+
+ deploy-prod:
+  <<: *prod-common
+  script:
+    - sh scripts/run.sh deploy prod
+
+ destroy-prod:
+  <<: *prod-common
+  script:
+    - sh scripts/run.sh destroy prod
+     
+    

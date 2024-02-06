@@ -1,0 +1,92 @@
+service: serverless-product
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: java11
+  region: us-east-2
+  profile: default
+  stage: dev
+  timeout: 15
+  memorySize: 1024
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - "arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/product"
+
+package:
+  artifact: build/distributions/serverless-product-1.0.0.zip
+
+functions:
+  getProduct:
+    handler: com.maomkt.product.StreamLambdaHandler::handleRequest
+    events:
+      - http:
+          path: product
+          method: get
+          cors: true
+      - schedule:
+          rate: rate(5 minutes)
+  getProductID:
+    handler: com.maomkt.product.StreamLambdaHandler::handleRequest
+    events:
+      - http:
+          path: product/{id}
+          method: get
+          cors: true
+      - schedule:
+          rate: rate(5 minutes)
+  createProduct:
+    handler: com.maomkt.product.StreamLambdaHandler::handleRequest
+    events:
+      - http:
+          path: product
+          method: post
+          cors: true
+      - schedule:
+          rate: rate(5 minutes)
+  updateProduct:
+    handler: com.maomkt.product.StreamLambdaHandler::handleRequest
+    events:
+      - http:
+          path: product/{id}
+          method: put
+          cors: true
+      - schedule:
+          rate: rate(5 minutes)
+  deleteProduct:
+    handler: com.maomkt.product.StreamLambdaHandler::handleRequest
+    events:
+      - http:
+          path: product/{id}
+          method: delete
+          cors: true
+      - schedule:
+          rate: rate(5 minutes)
+
+resources:
+  Resources:
+    product:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: product
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
